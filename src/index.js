@@ -9,7 +9,7 @@ app.use(cors());
 
 const users = [];
 
-// Middleware para verificar se usuario existe
+// Middleware para verificar se usuario existe pelo username
 function checksExistsUserAccount(request, response, next) {
     
     // dados da requisição
@@ -42,7 +42,7 @@ function checksCreateTodosUserAvailability(request, response, next) {
     return next();
 }
 
-// verificar se todo existe
+// Middleware para verificar se todo existe
 function checksTodoExists(request, response, next) {
 
     // dados da requisicao
@@ -67,8 +67,27 @@ function checksTodoExists(request, response, next) {
     return next();
 }
 
+// Middleware para verificar se usuario existe pelo id
 function findUserById(request, response, next) {
-    // Complete aqui
+    
+    // dados da requisição
+    const { id } = request.params;
+
+    // verifica se o uuid passado é valido
+    if(!validate(id)){
+        return response.status(400).json({ error: "User Uuid is not valid" });
+    }
+
+    const user = users.find(user => user.id === id);
+
+    // caso usuario não exista
+    if(!user){
+        return response.status(404).json({ error: "User not found" });
+    }
+
+    // inserindo o user no request
+    request.user = user;
+    return next();
 }
 
 app.post('/users', (request, response) => {
