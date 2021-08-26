@@ -42,8 +42,29 @@ function checksCreateTodosUserAvailability(request, response, next) {
     return next();
 }
 
+// verificar se todo existe
 function checksTodoExists(request, response, next) {
-    // Complete aqui
+
+    // dados da requisicao
+    const { user } = request;
+    const { id } = request.params;
+
+    // verifica se o uuid passado é valido
+    if(!validate(id)){
+        return response.status(400).json({ error: "Todo Uuid is not valid" });
+    }
+
+    // buscar o todo com base no id
+    const todo = user.todos.find(todo => todo.id === id);
+    
+    // caso não exista o todo
+    if (!todo) {
+        return response.status(404).json({ error: "Todo not found" });
+    }
+
+    // inserindo o todo dentro do request
+    request.todo = todo;
+    return next();
 }
 
 function findUserById(request, response, next) {
@@ -113,7 +134,7 @@ app.post('/todos', checksExistsUserAccount, checksCreateTodosUserAvailability, (
     return response.status(201).json(newTodo);
 });
 
-app.put('/todos/:id', checksTodoExists, (request, response) => {
+app.put('/todos/:id', checksExistsUserAccount, checksTodoExists, (request, response) => {
     const { title, deadline } = request.body;
     const { todo } = request;
 
@@ -123,7 +144,7 @@ app.put('/todos/:id', checksTodoExists, (request, response) => {
     return response.json(todo);
 });
 
-app.patch('/todos/:id/done', checksTodoExists, (request, response) => {
+app.patch('/todos/:id/done', checksExistsUserAccount, checksTodoExists, (request, response) => {
     const { todo } = request;
 
     todo.done = true;
