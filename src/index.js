@@ -14,20 +14,32 @@ function checksExistsUserAccount(request, response, next) {
     
     // dados da requisição
     const { username } = request.headers;
-    const user = users.find(user => user.username === username)
+    const user = users.find(user => user.username === username);
 
     // caso usuario não exista
     if(!user){
-        return response.status(404).json({ error: "User not found" })
+        return response.status(404).json({ error: "User not found" });
     }
 
     // inserindo o user no request
-    request.user = user
-    return next()
+    request.user = user;
+    return next();
 }
 
+// Middleware para verificar se usuario pode criar ToDo
 function checksCreateTodosUserAvailability(request, response, next) {
-    // Complete aqui
+    
+    // dados da requisicao
+    const { user } = request;
+
+    const countTodos = user.todos.length; // quantidade de todos criados
+
+    // caso possua 10 todos cadastrados com plano gratis
+    if (countTodos >= 10 && user.pro === false){
+        return response.status(400).json({ error: "No Todos Availability" });
+    }
+
+    return next();
 }
 
 function checksTodoExists(request, response, next) {
