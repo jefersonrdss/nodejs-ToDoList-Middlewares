@@ -36,7 +36,7 @@ function checksCreateTodosUserAvailability(request, response, next) {
 
     // caso possua 10 todos cadastrados com plano gratis
     if (countTodos >= 10 && user.pro === false){
-        return response.status(400).json({ error: "No Todos Availability" });
+        return response.status(403).json({ error: "No Todos Availability" });
     }
 
     return next();
@@ -46,23 +46,28 @@ function checksCreateTodosUserAvailability(request, response, next) {
 function checksTodoExists(request, response, next) {
 
     // dados da requisicao
-    const { user } = request;
+    const { username } = request.headers;
     const { id } = request.params;
 
-    // verifica se o uuid passado é valido
+    // validar usuario
+    const user = users.find(user => user.username === username);
+    if(!user){
+        return response.status(404).json({ error: "User not found" });
+    }
+
+    // validar uuid
     if(!validate(id)){
         return response.status(400).json({ error: "Todo Uuid is not valid" });
     }
 
-    // buscar o todo com base no id
+    // verificar se todo existe
     const todo = user.todos.find(todo => todo.id === id);
-    
-    // caso não exista o todo
     if (!todo) {
         return response.status(404).json({ error: "Todo not found" });
     }
 
     // inserindo o todo dentro do request
+    request.user = user;
     request.todo = todo;
     return next();
 }
@@ -153,7 +158,7 @@ app.post('/todos', checksExistsUserAccount, checksCreateTodosUserAvailability, (
     return response.status(201).json(newTodo);
 });
 
-app.put('/todos/:id', checksExistsUserAccount, checksTodoExists, (request, response) => {
+app.put('/todos/:id', checksTodoExists, (request, response) => {
     const { title, deadline } = request.body;
     const { todo } = request;
 
@@ -163,7 +168,7 @@ app.put('/todos/:id', checksExistsUserAccount, checksTodoExists, (request, respo
     return response.json(todo);
 });
 
-app.patch('/todos/:id/done', checksExistsUserAccount, checksTodoExists, (request, response) => {
+app.patch('/todos/:id/done', checksTodoExists, (request, response) => {
     const { todo } = request;
 
     todo.done = true;
